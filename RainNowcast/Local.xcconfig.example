@@ -1,0 +1,6 @@
+// このファイルを Local.xcconfig にコピーして、自分の Apple Developer Team ID を設定する。
+//   cp Local.xcconfig.example Local.xcconfig
+//
+// Local.xcconfig は .gitignore 済みなのでリポジトリには含まれない。
+// Team ID は Xcode > Settings > Accounts、または Apple Developer サイトで確認できる。
+DEVELOPMENT_TEAM = ABCDE12345

@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Xcode — user-specific state（macOS ユーザ名・端末名などが混入するため除外）
+xcuserdata/
+*.xcuserstate
+
+# Xcode — build artifacts
+build/
+DerivedData/
+
+# 個人のローカル署名設定（Apple Developer Team ID）。コミットしない。
+Local.xcconfig
+
+# Swift Package Manager
+.build/
+.swiftpm/

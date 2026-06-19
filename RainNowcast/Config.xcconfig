@@ -1,0 +1,13 @@
+// RainNowcast 共有ビルド設定（リポジトリに含める）
+//
+// 個人の署名設定（Apple Developer Team ID）はこのファイルには書かない。
+// 代わりに gitignore 済みの Local.xcconfig に書く。
+//
+// セットアップ:
+//   cp Local.xcconfig.example Local.xcconfig
+//   そして Local.xcconfig の DEVELOPMENT_TEAM を自分のチームIDに変更する。
+//
+// 下の optional include（"?" 付き）のおかげで、Local.xcconfig が無くても
+// ビルド構成は壊れない。その場合 DEVELOPMENT_TEAM は未設定（空）になり、
+// 自動署名で Xcode がチーム選択を促す。
+#include? "Local.xcconfig"
