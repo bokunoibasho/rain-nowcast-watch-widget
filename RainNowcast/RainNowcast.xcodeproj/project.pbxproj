@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E9DC36C2FE664020050E25C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EE4704F2FE4E5AE00ACD68F /* WidgetKit.framework */; };
+		0E9DC36D2FE664020050E25C /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EE470512FE4E5AE00ACD68F /* SwiftUI.framework */; };
+		0E9DC3782FE664030050E25C /* RainNowcastiOSWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0E9DC36B2FE664020050E25C /* RainNowcastiOSWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0EE470362FE4E55000ACD68F /* RainNowcast Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 0EE470352FE4E55000ACD68F /* RainNowcast Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0EE470502FE4E5AE00ACD68F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EE4704F2FE4E5AE00ACD68F /* WidgetKit.framework */; };
 		0EE470522FE4E5AE00ACD68F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EE470512FE4E5AE00ACD68F /* SwiftUI.framework */; };
@@ -14,6 +17,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		0E9DC3762FE664030050E25C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0EE470292FE4E55000ACD68F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0E9DC36A2FE664020050E25C;
+			remoteInfo = RainNowcastiOSWidgetExtension;
+		};
 		0EE470372FE4E55000ACD68F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0EE470292FE4E55000ACD68F /* Project object */;
@@ -31,6 +41,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		0E9DC37D2FE664030050E25C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				0E9DC3782FE664030050E25C /* RainNowcastiOSWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0EE470452FE4E55100ACD68F /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -56,15 +77,24 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0E9DC35C2FE663B90050E25C /* RainNowcastiOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RainNowcastiOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0E9DC36B2FE664020050E25C /* RainNowcastiOSWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainNowcastiOSWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EE4702F2FE4E55000ACD68F /* RainNowcast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RainNowcast.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EE470352FE4E55000ACD68F /* RainNowcast Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RainNowcast Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0EE4704D2FE4E5AE00ACD68F /* RainNowcastWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RainNowcastWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C0F16C0F16C0F16C0F16C0F1 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		0EE4704F2FE4E5AE00ACD68F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		0EE470512FE4E5AE00ACD68F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		C0F16C0F16C0F16C0F16C0F1 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0E9DC3792FE664030050E25C /* Exceptions for "RainNowcastiOSWidget" folder in "RainNowcastiOSWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 0E9DC36A2FE664020050E25C /* RainNowcastiOSWidgetExtension */;
+		};
 		0EE4705E2FE4E5AF00ACD68F /* Exceptions for "RainNowcastWidgetExtension" folder in "RainNowcastWidgetExtensionExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -75,6 +105,24 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		0E9DC35D2FE663B90050E25C /* RainNowcastiOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RainNowcastiOS;
+			sourceTree = "<group>";
+		};
+		0E9DC36E2FE664020050E25C /* RainNowcastiOSWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0E9DC3792FE664030050E25C /* Exceptions for "RainNowcastiOSWidget" folder in "RainNowcastiOSWidgetExtension" target */,
+			);
+			path = RainNowcastiOSWidget;
+			sourceTree = "<group>";
+		};
+		0E5A1ED000000000000000A1 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		0EE470392FE4E55000ACD68F /* RainNowcast Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "RainNowcast Watch App";
@@ -91,6 +139,22 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0E9DC3592FE663B90050E25C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E9DC3682FE664020050E25C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0E9DC36D2FE664020050E25C /* SwiftUI.framework in Frameworks */,
+				0E9DC36C2FE664020050E25C /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0EE470322FE4E55000ACD68F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -116,6 +180,9 @@
 				C0F16C0F16C0F16C0F16C0F1 /* Config.xcconfig */,
 				0EE470392FE4E55000ACD68F /* RainNowcast Watch App */,
 				0EE470532FE4E5AE00ACD68F /* RainNowcastWidgetExtension */,
+				0E9DC35D2FE663B90050E25C /* RainNowcastiOS */,
+				0E9DC36E2FE664020050E25C /* RainNowcastiOSWidget */,
+				0E5A1ED000000000000000A1 /* Shared */,
 				0EE4704E2FE4E5AE00ACD68F /* Frameworks */,
 				0EE470302FE4E55000ACD68F /* Products */,
 			);
@@ -127,6 +194,8 @@
 				0EE4702F2FE4E55000ACD68F /* RainNowcast.app */,
 				0EE470352FE4E55000ACD68F /* RainNowcast Watch App.app */,
 				0EE4704D2FE4E5AE00ACD68F /* RainNowcastWidgetExtensionExtension.appex */,
+				0E9DC35C2FE663B90050E25C /* RainNowcastiOS.app */,
+				0E9DC36B2FE664020050E25C /* RainNowcastiOSWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -143,6 +212,53 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		0E9DC35B2FE663B90050E25C /* RainNowcastiOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0E9DC3642FE663BA0050E25C /* Build configuration list for PBXNativeTarget "RainNowcastiOS" */;
+			buildPhases = (
+				0E9DC3582FE663B90050E25C /* Sources */,
+				0E9DC3592FE663B90050E25C /* Frameworks */,
+				0E9DC35A2FE663B90050E25C /* Resources */,
+				0E9DC37D2FE664030050E25C /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0E9DC3772FE664030050E25C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0E9DC35D2FE663B90050E25C /* RainNowcastiOS */,
+			);
+			name = RainNowcastiOS;
+			packageProductDependencies = (
+			);
+			productName = RainNowcastiOS;
+			productReference = 0E9DC35C2FE663B90050E25C /* RainNowcastiOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0E9DC36A2FE664020050E25C /* RainNowcastiOSWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0E9DC37A2FE664030050E25C /* Build configuration list for PBXNativeTarget "RainNowcastiOSWidgetExtension" */;
+			buildPhases = (
+				0E9DC3672FE664020050E25C /* Sources */,
+				0E9DC3682FE664020050E25C /* Frameworks */,
+				0E9DC3692FE664020050E25C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0E9DC36E2FE664020050E25C /* RainNowcastiOSWidget */,
+				0E5A1ED000000000000000A1 /* Shared */,
+			);
+			name = RainNowcastiOSWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = RainNowcastiOSWidgetExtension;
+			productReference = 0E9DC36B2FE664020050E25C /* RainNowcastiOSWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		0EE4702E2FE4E55000ACD68F /* RainNowcast */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0EE470462FE4E55100ACD68F /* Build configuration list for PBXNativeTarget "RainNowcast" */;
@@ -200,6 +316,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				0EE470532FE4E5AE00ACD68F /* RainNowcastWidgetExtension */,
+				0E5A1ED000000000000000A1 /* Shared */,
 			);
 			name = RainNowcastWidgetExtensionExtension;
 			packageProductDependencies = (
@@ -218,6 +335,12 @@
 				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
+					0E9DC35B2FE663B90050E25C = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					0E9DC36A2FE664020050E25C = {
+						CreatedOnToolsVersion = 26.5;
+					};
 					0EE4702E2FE4E55000ACD68F = {
 						CreatedOnToolsVersion = 26.5;
 					};
@@ -246,11 +369,27 @@
 				0EE4702E2FE4E55000ACD68F /* RainNowcast */,
 				0EE470342FE4E55000ACD68F /* RainNowcast Watch App */,
 				0EE4704C2FE4E5AE00ACD68F /* RainNowcastWidgetExtensionExtension */,
+				0E9DC35B2FE663B90050E25C /* RainNowcastiOS */,
+				0E9DC36A2FE664020050E25C /* RainNowcastiOSWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0E9DC35A2FE663B90050E25C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E9DC3692FE664020050E25C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0EE4702D2FE4E55000ACD68F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -275,6 +414,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0E9DC3582FE663B90050E25C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0E9DC3672FE664020050E25C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0EE470312FE4E55000ACD68F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -292,6 +445,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		0E9DC3772FE664030050E25C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0E9DC36A2FE664020050E25C /* RainNowcastiOSWidgetExtension */;
+			targetProxy = 0E9DC3762FE664030050E25C /* PBXContainerItemProxy */;
+		};
 		0EE470382FE4E55000ACD68F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 0EE470342FE4E55000ACD68F /* RainNowcast Watch App */;
@@ -305,6 +463,140 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		0E9DC3652FE663BA0050E25C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の降水予報を表示するために使用します";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bokunoibasho.RainNowcastiOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0E9DC3662FE663BA0050E25C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の降水予報を表示するために使用します";
+				PRODUCT_BUNDLE_IDENTIFIER = com.bokunoibasho.RainNowcastiOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0E9DC37B2FE664030050E25C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RainNowcastiOSWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RainNowcastiOSWidget;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の降水予報を表示するために使用します";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bokunoibasho.RainNowcastiOS.RainNowcastiOSWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		0E9DC37C2FE664030050E25C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RainNowcastiOSWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RainNowcastiOSWidget;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "現在地の降水予報を表示するために使用します";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bokunoibasho.RainNowcastiOS.RainNowcastiOSWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		0EE470402FE4E55100ACD68F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C0F16C0F16C0F16C0F16C0F1 /* Config.xcconfig */;
@@ -591,6 +883,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0E9DC3642FE663BA0050E25C /* Build configuration list for PBXNativeTarget "RainNowcastiOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E9DC3652FE663BA0050E25C /* Debug */,
+				0E9DC3662FE663BA0050E25C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0E9DC37A2FE664030050E25C /* Build configuration list for PBXNativeTarget "RainNowcastiOSWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0E9DC37B2FE664030050E25C /* Debug */,
+				0E9DC37C2FE664030050E25C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		0EE4702C2FE4E55000ACD68F /* Build configuration list for PBXProject "RainNowcast" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
