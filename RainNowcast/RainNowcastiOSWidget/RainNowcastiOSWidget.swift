@@ -55,22 +55,28 @@ struct RainProvideriOS: TimelineProvider {
         Task {
             let base = await fetchEntry()
             // 1回の取得から5分刻みの派生エントリを作り、先頭バーを順に落として「現在」を実時間に追従させる。
-            // ネットワーク取得は伴わないのでバジェットを消費しない。再取得は20分後に要求する。
+            // ネットワーク取得は伴わないのでバジェットを消費しない。
             let entries = Self.makeEntries(from: base)
-            let next = Calendar.current.date(byAdding: .minute, value: 20, to: base.fetchedAt)!
+            // 今後1時間 降水なし（.dryForHour）なら再取得を1時間後に延ばして省電力。
+            // それ以外（降雨あり/降り出す/取得失敗）は従来どおり20分後。
+            let dryForHour: Bool = { if case .dryForHour = base.summary { return true } else { return false } }()
+            let minutes = dryForHour ? 60 : 20
+            let next = Calendar.current.date(byAdding: .minute, value: minutes, to: base.fetchedAt)!
             completion(Timeline(entries: entries, policy: .after(next)))
         }
     }
 
-    /// 1回の取得（base）から5分刻みで派生エントリを作る。各エントリは先頭バーを k 本落とし、
-    /// サマリーもそのエントリ時刻基準で再計算する（既存 summarize の now: を利用）。
+    /// 1回の取得（base）から5分刻みで派生エントリを作る。各エントリは先頭の実況バーを常に1本落とし
+    /// （→ 1本目=+5分）、さらに k 本進めて「現在」を実時間に追従させる。サマリーは実況込みで再計算する。
     private static func makeEntries(from base: RainEntryiOS) -> [RainEntryiOS] {
-        guard !base.steps.isEmpty else { return [base] }  // 未許可/取得失敗時は1枚のまま
-        let count = min(4, base.steps.count)               // 0,5,10,15分 → 20分を4枚でカバー
+        guard base.steps.count > 1 else { return [base] }  // 実況のみ/未許可/取得失敗時は1枚のまま
+        let count = min(4, base.steps.count - 1)           // 実況を1本捨てるので -1。0,5,10,15分の4枚
         return (0..<count).map { k in
             let entryDate = Calendar.current.date(byAdding: .minute, value: k * 5, to: base.fetchedAt)!
-            let sliced = Array(base.steps.dropFirst(k))    // 先頭 k 本を除去
-            let summary = JMANowcast.summarize(sliced, now: entryDate)
+            // 要約は実況込み（dropFirst(k)）で判定 → 「今降っている」を取りこぼさない
+            let summary = JMANowcast.summarize(Array(base.steps.dropFirst(k)), now: entryDate)
+            // バーは実況を除いた未来のみ（dropFirst(k + 1)）→ 1本目=+5分
+            let sliced = Array(base.steps.dropFirst(k + 1))
             return RainEntryiOS(date: entryDate, fetchedAt: base.fetchedAt, dropped: k,
                                 steps: sliced, placeName: base.placeName,
                                 summary: summary, notAuthorized: base.notAuthorized)
@@ -154,7 +160,7 @@ struct RainNowcastiOSWidgetEntryView: View {
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Text("60分")
+                Text("\(5 * bars.count)分")   // 右端=今から何分先か。本数×5分（60→55→50→45）
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
@@ -196,7 +202,7 @@ struct RainNowcastiOSWidgetEntryView: View {
     // MARK: 派生値
 
     private var bars: [Double] {
-        entry.steps.isEmpty ? Array(repeating: 0, count: 13) : entry.steps.map(\.mmPerHour)
+        entry.steps.isEmpty ? Array(repeating: 0, count: 12) : entry.steps.map(\.mmPerHour)
     }
 
     // デバッグ用：最終取得時刻（端末ローカル＝JST、HH:mm）
@@ -271,19 +277,19 @@ struct RainNowcastiOSWidget: Widget {
 #Preview(as: .systemSmall) {
     RainNowcastiOSWidget()
 } timeline: {
-    // 5分刻みで先頭バーが1本ずつ落ちていく様子をスクラブで確認できる（k=0…3）。
+    // 実況バーを除いた未来のみ（先頭=+5分）。5分刻みで先頭が1本ずつ落ちる様子をスクラブ確認（k=0…3）。
     let now = Date()
     let steps = RainProvideriOS.sampleSteps
     RainEntryiOS(date: now, fetchedAt: now, dropped: 0,
-                 steps: Array(steps.dropFirst(0)), placeName: "左京区",
-                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
-    RainEntryiOS(date: now.addingTimeInterval(300), fetchedAt: now, dropped: 1,
                  steps: Array(steps.dropFirst(1)), placeName: "左京区",
                  summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
-    RainEntryiOS(date: now.addingTimeInterval(600), fetchedAt: now, dropped: 2,
+    RainEntryiOS(date: now.addingTimeInterval(300), fetchedAt: now, dropped: 1,
                  steps: Array(steps.dropFirst(2)), placeName: "左京区",
                  summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
-    RainEntryiOS(date: now.addingTimeInterval(900), fetchedAt: now, dropped: 3,
+    RainEntryiOS(date: now.addingTimeInterval(600), fetchedAt: now, dropped: 2,
                  steps: Array(steps.dropFirst(3)), placeName: "左京区",
+                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
+    RainEntryiOS(date: now.addingTimeInterval(900), fetchedAt: now, dropped: 3,
+                 steps: Array(steps.dropFirst(4)), placeName: "左京区",
                  summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
 }
