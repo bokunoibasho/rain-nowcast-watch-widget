@@ -28,6 +28,7 @@ struct RainEntryiOS: TimelineEntry {
     let steps: [RainStep]      // 棒グラフ用の全タイムライン（実況1＋予報12 ≒ 13点）
     let placeName: String?     // 逆ジオコーディング結果（best-effort）
     let summary: RainSummary   // glyph と2行要約に使用
+    let outlook: RainOutlook?  // 「今後の雨」(rasrf)。.dryForHour の時だけ非nil
     let notAuthorized: Bool    // 位置情報が未許可なら true
 }
 
@@ -40,7 +41,7 @@ struct RainProvideriOS: TimelineProvider {
     func placeholder(in context: Context) -> RainEntryiOS {
         RainEntryiOS(date: .now, fetchedAt: .now, dropped: 0, steps: Self.sampleSteps,
                      placeName: "左京区", summary: .rainingNoStop(mmPerHour: 3),
-                     notAuthorized: false)
+                     outlook: nil, notAuthorized: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (RainEntryiOS) -> Void) {
@@ -57,11 +58,7 @@ struct RainProvideriOS: TimelineProvider {
             // 1回の取得から5分刻みの派生エントリを作り、先頭バーを順に落として「現在」を実時間に追従させる。
             // ネットワーク取得は伴わないのでバジェットを消費しない。
             let entries = Self.makeEntries(from: base)
-            // 今後1時間 降水なし（.dryForHour）なら再取得を1時間後に延ばして省電力。
-            // それ以外（降雨あり/降り出す/取得失敗）は従来どおり20分後。
-            let dryForHour: Bool = { if case .dryForHour = base.summary { return true } else { return false } }()
-            let minutes = dryForHour ? 60 : 20
-            let next = Calendar.current.date(byAdding: .minute, value: minutes, to: base.fetchedAt)!
+            let next = Self.nextRefresh(for: base)
             completion(Timeline(entries: entries, policy: .after(next)))
         }
     }
@@ -79,7 +76,32 @@ struct RainProvideriOS: TimelineProvider {
             let sliced = Array(base.steps.dropFirst(k + 1))
             return RainEntryiOS(date: entryDate, fetchedAt: base.fetchedAt, dropped: k,
                                 steps: sliced, placeName: base.placeName,
-                                summary: summary, notAuthorized: base.notAuthorized)
+                                summary: summary, outlook: base.outlook,
+                                notAuthorized: base.notAuthorized)
+        }
+    }
+
+    /// 次回取得時刻を決める。
+    /// ・近い雨あり/降雨中/取得失敗 → 従来どおり 20 分後。
+    /// ・今後1時間 雨なし（.dryForHour）→「今後の雨」(rasrf) の見通しで後ろ倒し：
+    ///   雨が来る時刻の 1 時間前（起床時にナウキャストがその雨を捕捉して 20 分間隔へ移行）。
+    ///   雨が無ければ取得できた最終時刻（≒15時間先）まで延ばす。rasrf 失敗時は従来の 60 分。
+    /// いずれも fetchedAt+20分 〜 fetchedAt+15時間 にクランプする。
+    private static func nextRefresh(for base: RainEntryiOS) -> Date {
+        let cal = Calendar.current
+        let floor = cal.date(byAdding: .minute, value: 20, to: base.fetchedAt)!
+        let ceil  = cal.date(byAdding: .hour,   value: 15, to: base.fetchedAt)!
+
+        guard case .dryForHour = base.summary else { return floor }  // 雨が近い/不明 → 20分
+
+        switch base.outlook {
+        case .rainExpected(let t):
+            let oneHourBefore = t.addingTimeInterval(-3600)
+            return min(max(oneHourBefore, floor), ceil)
+        case .dryThrough(let until):
+            return min(max(until, floor), ceil)
+        case .unknown, .none:  // rasrf 取得失敗 → 従来の 60 分
+            return cal.date(byAdding: .minute, value: 60, to: base.fetchedAt)!
         }
     }
 
@@ -87,20 +109,27 @@ struct RainProvideriOS: TimelineProvider {
     private func fetchEntry() async -> RainEntryiOS {
         guard location.isAuthorized else {
             return RainEntryiOS(date: .now, fetchedAt: .now, dropped: 0, steps: [],
-                                placeName: nil, summary: .unknown, notAuthorized: true)
+                                placeName: nil, summary: .unknown, outlook: nil,
+                                notAuthorized: true)
         }
         do {
             let loc = try await location.current()
-            let steps = try await JMANowcast.fetchTimeline(
-                lat: loc.coordinate.latitude, lon: loc.coordinate.longitude)
+            let lat = loc.coordinate.latitude, lon = loc.coordinate.longitude
+            let steps = try await JMANowcast.fetchTimeline(lat: lat, lon: lon)
             let summary = JMANowcast.summarize(steps)
+            // 今後1時間 雨なしの時だけ「今後の雨」(rasrf) で先を見る（同じ緯度経度を再利用）。
+            var outlook: RainOutlook? = nil
+            if case .dryForHour = summary {
+                outlook = try? await JMANowcast.fetchOutlook(lat: lat, lon: lon)
+            }
             let place = await Self.reverseGeocode(loc)
             return RainEntryiOS(date: .now, fetchedAt: .now, dropped: 0, steps: steps,
-                                placeName: place, summary: summary, notAuthorized: false)
+                                placeName: place, summary: summary, outlook: outlook,
+                                notAuthorized: false)
         } catch {
             return RainEntryiOS(date: .now, fetchedAt: .now, dropped: 0, steps: [],
                                 placeName: Self.cachedPlaceName, summary: .unknown,
-                                notAuthorized: false)
+                                outlook: nil, notAuthorized: false)
         }
     }
 
@@ -236,9 +265,16 @@ struct RainNowcastiOSWidgetEntryView: View {
         case .rainingNoStop(let mm), .rainingStopsIn(_, let mm):
             return mm >= 10 ? "cloud.heavyrain.fill" : "cloud.rain.fill"
         case .startsIn:   return "cloud.rain"
-        case .dryForHour: return "sun.max.fill"
+        case .dryForHour:
+            if case .rainExpected = entry.outlook { return "cloud.sun" }  // 数時間先に雨
+            return "sun.max.fill"
         case .unknown:    return "cloud"
         }
+    }
+
+    // 「今後の雨」(rasrf) の時刻 → 今からの概算時間（entry 時刻基準、最低1時間）
+    private func outlookHours(_ t: Date) -> Int {
+        max(1, Int((t.timeIntervalSince(entry.date) / 3600).rounded()))
     }
 
     private var summaryString: String {
@@ -251,7 +287,15 @@ struct RainNowcastiOSWidgetEntryView: View {
         case .rainingNoStop:
             return "今後1時間、\n雨が続くでしょう"
         case .dryForHour:
-            return "今後1時間、\n雨は降らないでしょう"
+            // 「今後の雨」で先が読めていればそれを優先表示。読めなければ従来の1時間表現。
+            switch entry.outlook {
+            case .rainExpected(let t):
+                return "約\(outlookHours(t))時間後に\n雨が降りそうです"
+            case .dryThrough(let until):
+                return "今後約\(outlookHours(until))時間、\n雨は降らないでしょう"
+            case .unknown, .none:
+                return "今後1時間、\n雨は降らないでしょう"
+            }
         case .unknown:
             return "降水データを\n取得できません"
         }
@@ -282,14 +326,19 @@ struct RainNowcastiOSWidget: Widget {
     let steps = RainProvideriOS.sampleSteps
     RainEntryiOS(date: now, fetchedAt: now, dropped: 0,
                  steps: Array(steps.dropFirst(1)), placeName: "左京区",
-                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
+                 summary: .rainingNoStop(mmPerHour: 3), outlook: nil, notAuthorized: false)
     RainEntryiOS(date: now.addingTimeInterval(300), fetchedAt: now, dropped: 1,
                  steps: Array(steps.dropFirst(2)), placeName: "左京区",
-                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
+                 summary: .rainingNoStop(mmPerHour: 3), outlook: nil, notAuthorized: false)
     RainEntryiOS(date: now.addingTimeInterval(600), fetchedAt: now, dropped: 2,
                  steps: Array(steps.dropFirst(3)), placeName: "左京区",
-                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
+                 summary: .rainingNoStop(mmPerHour: 3), outlook: nil, notAuthorized: false)
     RainEntryiOS(date: now.addingTimeInterval(900), fetchedAt: now, dropped: 3,
                  steps: Array(steps.dropFirst(4)), placeName: "左京区",
-                 summary: .rainingNoStop(mmPerHour: 3), notAuthorized: false)
+                 summary: .rainingNoStop(mmPerHour: 3), outlook: nil, notAuthorized: false)
+    // 「今後の雨」で当面 雨なし（棒グラフは空・要約は約15時間 雨なし）
+    RainEntryiOS(date: now, fetchedAt: now, dropped: 0,
+                 steps: [], placeName: "左京区", summary: .dryForHour,
+                 outlook: .dryThrough(until: now.addingTimeInterval(15 * 3600)),
+                 notAuthorized: false)
 }

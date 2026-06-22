@@ -33,6 +33,14 @@ enum RainSummary {
     case unknown
 }
 
+/// 「今後の雨」(rasrf) による1時間より先の見通し。
+/// ナウキャストが .dryForHour の時だけ取得し、再取得間隔の決定と表示に使う。
+enum RainOutlook {
+    case rainExpected(at: Date)   // 最初に雨が来る validtime（UTC）
+    case dryThrough(until: Date)  // この時刻まで雨なし（= 取得できた最終 validtime, UTC）
+    case unknown                  // 取得失敗など → 呼び出し側は従来動作にフォールバック
+}
+
 // MARK: - 2. 気象庁ナウキャスト エンジン
 
 enum JMANowcast {
@@ -43,6 +51,8 @@ enum JMANowcast {
     //   キャッシュされて自分にも他人にも不利益になる（やらない）。
     private static let targetTimesNowURL  = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json")!
     private static let targetTimesFcstURL = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json")!
+    // 「今後の雨」(rasrf)。最大15時間先までの「各時刻までの1時間降水量」タイル。
+    private static let targetTimesRasrfURL = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/rasrf/targetTimes.json")!
 
     private static let zoom = 10          // hrpns の最大ズーム
     private static let tileSize = 256.0
@@ -73,6 +83,32 @@ enum JMANowcast {
         return steps
     }
 
+    /// 「今後の雨」(rasrf) で1時間より先の見通しを得る。
+    /// ナウキャストが .dryForHour の時だけ呼ぶ想定。最初に雨が来る時刻、無ければ
+    /// 取得できた最終時刻（≒15時間先）まで雨なし、を返す。
+    static func fetchOutlook(lat: Double, lon: Double, now: Date = .now) async throws -> RainOutlook {
+        let all = try await fetchTargetTimes(targetTimesRasrfURL)
+
+        // rasrf 要素・未来の validtime のみ。最新 basetime ほど前方が欠けることがあるため、
+        // 同一 validtime は basetime が最も新しいタイルを採用して網羅性を確保する。
+        var byValid: [String: TargetTime] = [:]
+        for t in all where (t.elements ?? []).contains("rasrf") && parse(t.validtime) > now {
+            if let existing = byValid[t.validtime], existing.basetime >= t.basetime { continue }
+            byValid[t.validtime] = t
+        }
+        let future = byValid.values.sorted { $0.validtime < $1.validtime }
+        guard let last = future.last else { return .unknown }
+
+        for t in future {
+            let mm = await sampleIntensity(basetime: t.basetime, validtime: t.validtime,
+                                           lat: lat, lon: lon, product: "rasrf", layer: "rasrf")
+            // rasrf は1時間積算で凡例色が hrpns と異なるが、mm>0（=不透明ピクセル）で
+            // 「その時刻までの1時間に降雨あり」を頑健に判定できる。
+            if mm > 0 { return .rainExpected(at: parse(t.validtime)) }
+        }
+        return .dryThrough(until: parse(last.validtime))
+    }
+
     private static func fetchTargetTimes(_ url: URL) async throws -> [TargetTime] {
         let (data, _) = try await URLSession.shared.data(from: url)
         return try JSONDecoder().decode([TargetTime].self, from: data)
@@ -81,7 +117,8 @@ enum JMANowcast {
     // MARK: タイル座標 → ピクセル抽出 → 降水強度
 
     private static func sampleIntensity(basetime: String, validtime: String,
-                                        lat: Double, lon: Double) async -> Double {
+                                        lat: Double, lon: Double,
+                                        product: String = "nowc", layer: String = "hrpns") async -> Double {
         let n = pow(2.0, Double(zoom))
         let latRad = lat * .pi / 180
         let xWorld = (lon + 180) / 360 * n
@@ -91,7 +128,7 @@ enum JMANowcast {
         let px = Int((xWorld - Double(tileX)) * tileSize)
         let py = Int((yWorld - Double(tileY)) * tileSize)
 
-        let urlStr = "https://www.jma.go.jp/bosai/jmatile/data/nowc/\(basetime)/none/\(validtime)/surf/hrpns/\(zoom)/\(tileX)/\(tileY).png"
+        let urlStr = "https://www.jma.go.jp/bosai/jmatile/data/\(product)/\(basetime)/none/\(validtime)/surf/\(layer)/\(zoom)/\(tileX)/\(tileY).png"
         guard let url = URL(string: urlStr) else { return 0 }
 
         do {
