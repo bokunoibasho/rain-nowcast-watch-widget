@@ -33,23 +33,29 @@ enum RainSummary {
     case unknown
 }
 
-/// 「今後の雨」(rasrf) による1時間より先の見通し。
-/// ナウキャストが .dryForHour の時だけ取得し、再取得間隔の決定と表示に使う。
+/// rasrf 先頭ゲートの判定結果。安い rasrf を常に先に見て、雨が直近に迫っているときだけ
+/// 詳細な hrpns 予報を取りに行く——その分岐に使う。
+enum RainGate {
+    case imminent(firstRain: Date)  // 直近（先頭1〜2枠）に雨 → hrpns 予報を取得して棒グラフ表示
+    case later(rainAt: Date)        // 数時間先に雨 → hrpns 不要、見通し文言のみ
+    case dry(until: Date)           // 当面 雨なし
+    case unknown                    // rasrf 取得失敗 → hrpns フォールバック
+}
+
+/// 棒グラフを出さないときの見通し表示（rasrf 由来）。
 enum RainOutlook {
-    case rainExpected(at: Date)   // 最初に雨が来る validtime（UTC）
-    case dryThrough(until: Date)  // この時刻まで雨なし（= 取得できた最終 validtime, UTC）
-    case unknown                  // 取得失敗など → 呼び出し側は従来動作にフォールバック
+    case rainExpected(at: Date)   // 最初に雨が来る validtime（UTC）→「約N時間後に雨」
+    case dryThrough(until: Date)  // この時刻まで雨なし →「しばらく雨なし」
 }
 
 // MARK: - 2. 気象庁ナウキャスト エンジン
 
 enum JMANowcast {
 
-    // 時刻一覧。実況(N1)と予報(N2)に分かれている。
+    // 予報(N2)の時刻一覧。
     // ※ 必ずこの JSON を読んで basetime/validtime を得ること。
     //   現在時刻から URL を推測すると 404 を量産し、その404がCDNに
     //   キャッシュされて自分にも他人にも不利益になる（やらない）。
-    private static let targetTimesNowURL  = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json")!
     private static let targetTimesFcstURL = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json")!
     // 「今後の雨」(rasrf)。最大15時間先までの「各時刻までの1時間降水量」タイル。
     private static let targetTimesRasrfURL = URL(string: "https://www.jma.go.jp/bosai/jmatile/data/rasrf/targetTimes.json")!
@@ -63,19 +69,12 @@ enum JMANowcast {
         let elements: [String]?
     }
 
-    /// 現在地の 1 時間ぶんの降水タイムラインを構築
+    /// 現在地の今後1時間の降水タイムライン（予報 N2 を validtime 昇順・5分刻み12枚）を構築。
+    /// 先頭フレームの validtime は basetime+5分（≒現在）なので「今降っているか」も判定できる。
     static func fetchTimeline(lat: Double, lon: Double) async throws -> [RainStep] {
-        async let nowTimes  = fetchTargetTimes(targetTimesNowURL)
-        async let fcstTimes = fetchTargetTimes(targetTimesFcstURL)
-        let (n1, n2) = try await (nowTimes, fcstTimes)
-
-        // 実況の最新 1 枚 ＋ 予報すべて（今〜+60分 / 5分刻み）を時刻順に並べる
-        var times: [TargetTime] = []
-        if let latest = n1.max(by: { $0.validtime < $1.validtime }) { times.append(latest) }
-        times.append(contentsOf: n2.sorted { $0.validtime < $1.validtime })
-
+        let fcst = try await fetchTargetTimes(targetTimesFcstURL)
         var steps: [RainStep] = []
-        for t in times {
+        for t in fcst.sorted(by: { $0.validtime < $1.validtime }) {
             let mm = await sampleIntensity(basetime: t.basetime, validtime: t.validtime,
                                            lat: lat, lon: lon)
             steps.append(RainStep(date: parse(t.validtime), mmPerHour: mm))
@@ -83,10 +82,10 @@ enum JMANowcast {
         return steps
     }
 
-    /// 「今後の雨」(rasrf) で1時間より先の見通しを得る。
-    /// ナウキャストが .dryForHour の時だけ呼ぶ想定。最初に雨が来る時刻、無ければ
-    /// 取得できた最終時刻（≒15時間先）まで雨なし、を返す。
-    static func fetchOutlook(lat: Double, lon: Double, now: Date = .now) async throws -> RainOutlook {
+    /// 「今後の雨」(rasrf) を先頭ゲートとして使い、hrpns を取りに行くべきかを判定する。
+    /// rasrf は毎正時 validtime・1時間刻み・各時刻までの1時間積算。安いので常時これを先に見て、
+    /// 雨が直近（先頭1〜2枠）に迫っているときだけ詳細な hrpns 予報を取得する。
+    static func fetchRainGate(lat: Double, lon: Double, now: Date = .now) async throws -> RainGate {
         let all = try await fetchTargetTimes(targetTimesRasrfURL)
 
         // rasrf 要素・未来の validtime のみ。最新 basetime ほど前方が欠けることがあるため、
@@ -99,14 +98,21 @@ enum JMANowcast {
         let future = byValid.values.sorted { $0.validtime < $1.validtime }
         guard let last = future.last else { return .unknown }
 
+        // 「直近」= 先頭1〜2枠。rasrf は正時バケツで先頭枠が過去を一部含むため、
+        // この2枠で次の約60〜70分の降り出し／降雨中を取りこぼさない。
+        let imminentUntil = future[min(1, future.count - 1)].validtime
+
         for t in future {
             let mm = await sampleIntensity(basetime: t.basetime, validtime: t.validtime,
                                            lat: lat, lon: lon, product: "rasrf", layer: "rasrf")
             // rasrf は1時間積算で凡例色が hrpns と異なるが、mm>0（=不透明ピクセル）で
             // 「その時刻までの1時間に降雨あり」を頑健に判定できる。
-            if mm > 0 { return .rainExpected(at: parse(t.validtime)) }
+            if mm > 0 {
+                let at = parse(t.validtime)
+                return t.validtime <= imminentUntil ? .imminent(firstRain: at) : .later(rainAt: at)
+            }
         }
-        return .dryThrough(until: parse(last.validtime))
+        return .dry(until: parse(last.validtime))
     }
 
     private static func fetchTargetTimes(_ url: URL) async throws -> [TargetTime] {
