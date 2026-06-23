@@ -2,7 +2,7 @@
 //  RainNowcastApp.swift
 //  Watch App 本体（位置情報の許可リクエスト＋出典表示を担当）
 //
-//  役割（Handoff §4）:
+//  役割:
 //   - 起動時に「使用中のみ許可（When In Use）」を一度リクエストする。
 //     これを先に通しておかないと、Widget 側の
 //     CLLocationManager.isAuthorizedForWidgetUpdates が false のままになる。
@@ -75,7 +75,7 @@ struct ContentView: View {
 
                 Divider().padding(.vertical, 2)
 
-                // 出典表示（Handoff §9 / §10）
+                // 出典表示
                 Text("気象データ © Japan Meteorological Agency")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

@@ -2,7 +2,7 @@
 //  RainNowcastiOSWidgetBundle.swift
 //  RainNowcastiOSWidget
 //
-//  Created by bokunoibasho on 2026/06/20.
+//  iOS ウィジェット拡張のエントリポイント（@main, WidgetBundle 宣言）。
 //
 
 import WidgetKit
