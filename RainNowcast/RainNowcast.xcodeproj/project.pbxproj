@@ -228,6 +228,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				0E9DC35D2FE663B90050E25C /* RainNowcastiOS */,
+				0E5A1ED000000000000000A1 /* Shared */,
 			);
 			name = RainNowcastiOS;
 			packageProductDependencies = (

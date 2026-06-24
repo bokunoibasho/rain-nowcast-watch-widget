@@ -280,17 +280,9 @@ struct RainNowcastiOSWidgetEntryView: View {
         }
     }
 
-    // 棒グラフ：mm/h → 高さ（sqrt 正規化）。無降水も最小ノブで連続表示。
+    // 棒グラフ（配色・高さは Shared/RainChartView.swift に集約）
     private var chart: some View {
-        HStack(alignment: .bottom, spacing: 1.5) {
-            ForEach(bars.indices, id: \.self) { i in
-                let mm = bars[i]
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(barColor(mm))
-                    .frame(height: barHeight(mm))
-            }
-        }
-        .frame(height: maxBarHeight, alignment: .bottom)
+        RainBarChart(values: bars, maxBarHeight: maxBarHeight)
     }
 
     // MARK: 派生値
@@ -310,34 +302,8 @@ struct RainNowcastiOSWidgetEntryView: View {
         return f.string(from: entry.fetchedAt)
     }
 
-    private func barHeight(_ mm: Double) -> CGFloat {
-        let cap = 30.0
-        let frac = min(max(mm, 0), cap) / cap
-        return max(2, CGFloat(frac.squareRoot()) * maxBarHeight)
-    }
-
-    private func barColor(_ mm: Double) -> Color {
-        switch mm {
-        case ..<0.1:  return Color.blue.opacity(0.22)   // 無降水ノブ
-        case ..<5:    return Color(red: 0.55, green: 0.82, blue: 1.0)
-        case ..<10:   return Color(red: 0.25, green: 0.62, blue: 1.0)
-        case ..<20:   return Color(red: 0.05, green: 0.40, blue: 1.0)
-        case ..<30:   return Color.yellow
-        case ..<50:   return Color.orange
-        default:      return Color.red
-        }
-    }
-
     private var weatherGlyph: String {
-        switch entry.summary {
-        case .rainingNoStop(let mm), .rainingStopsIn(_, let mm):
-            return mm >= 10 ? "cloud.heavyrain.fill" : "cloud.rain.fill"
-        case .startsIn:   return "cloud.rain"
-        case .dryForHour:
-            if case .rainExpected = entry.outlook { return "cloud.sun" }  // 数時間先に雨
-            return "sun.max.fill"
-        case .unknown:    return "cloud"
-        }
+        RainStyle.weatherGlyph(summary: entry.summary, outlook: entry.outlook)
     }
 
     // 「今後の雨」(rasrf) の時刻 → 今からの概算時間（entry 時刻基準、最低1時間）

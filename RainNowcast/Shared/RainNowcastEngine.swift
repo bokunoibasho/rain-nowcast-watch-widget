@@ -82,20 +82,26 @@ enum JMANowcast {
         return steps
     }
 
-    /// 「今後の雨」(rasrf) を先頭ゲートとして使い、hrpns を取りに行くべきかを判定する。
-    /// rasrf は毎正時 validtime・1時間刻み・各時刻までの1時間積算。安いので常時これを先に見て、
-    /// 雨が直近（先頭1〜2枠）に迫っているときだけ詳細な hrpns 予報を取得する。
-    static func fetchRainGate(lat: Double, lon: Double, now: Date = .now) async throws -> RainGate {
+    /// 「今後の雨」(rasrf) の「未来の毎正時」一覧を返す（要素=rasrf・validtime>now）。
+    /// 最新 basetime ほど前方が欠けることがあるため、同一 validtime は basetime が最も新しい
+    /// タイルを採用して網羅性を確保する。サンプリング（タイル取得）は伴わない安い処理。
+    /// fetchRainGate（先頭ゲート）と fetchHourlyRain（時間別表示）で共有する。
+    private static func futureRasrfTimes(now: Date) async throws -> [TargetTime] {
         let all = try await fetchTargetTimes(targetTimesRasrfURL)
-
-        // rasrf 要素・未来の validtime のみ。最新 basetime ほど前方が欠けることがあるため、
-        // 同一 validtime は basetime が最も新しいタイルを採用して網羅性を確保する。
         var byValid: [String: TargetTime] = [:]
         for t in all where (t.elements ?? []).contains("rasrf") && parse(t.validtime) > now {
             if let existing = byValid[t.validtime], existing.basetime >= t.basetime { continue }
             byValid[t.validtime] = t
         }
-        let future = byValid.values.sorted { $0.validtime < $1.validtime }
+        return byValid.values.sorted { $0.validtime < $1.validtime }
+    }
+
+    /// 「今後の雨」(rasrf) を先頭ゲートとして使い、hrpns を取りに行くべきかを判定する。
+    /// rasrf は毎正時 validtime・1時間刻み・各時刻までの1時間積算。安いので常時これを先に見て、
+    /// 雨が直近（先頭1〜2枠）に迫っているときだけ詳細な hrpns 予報を取得する。
+    /// 先頭から順にサンプリングし、最初の降雨を見つけ次第打ち切る（無駄なタイル取得をしない）。
+    static func fetchRainGate(lat: Double, lon: Double, now: Date = .now) async throws -> RainGate {
+        let future = try await futureRasrfTimes(now: now)
         guard let last = future.last else { return .unknown }
 
         // 「直近」= 先頭1〜2枠。rasrf は正時バケツで先頭枠が過去を一部含むため、
@@ -113,6 +119,34 @@ enum JMANowcast {
             }
         }
         return .dry(until: parse(last.validtime))
+    }
+
+    /// 時間別表示用：rasrf の毎正時の降水有無を最大 maxHours 点ぶん返す。
+    /// 各点は date=validtime(UTC)・mmPerHour=サンプル値（0=雨なし）。RainStep.isRaining で
+    /// 雨/雨なしを出し分ける。ゲートと違い早期打ち切りせず、表示ぶん（先頭から maxHours）を全て取る。
+    static func fetchHourlyRain(lat: Double, lon: Double, now: Date = .now,
+                                maxHours: Int = 9) async throws -> [RainStep] {
+        let future = try await futureRasrfTimes(now: now).prefix(maxHours)
+        var steps: [RainStep] = []
+        for t in future {
+            let mm = await sampleIntensity(basetime: t.basetime, validtime: t.validtime,
+                                           lat: lat, lon: lon, product: "rasrf", layer: "rasrf")
+            steps.append(RainStep(date: parse(t.validtime), mmPerHour: mm))
+        }
+        return steps
+    }
+
+    /// レーダーマップ用：予報(N2) の現在に最も近いフレーム（basetime/validtime）を返す。
+    /// hrpns タイル URL（…/nowc/{basetime}/none/{validtime}/surf/hrpns/{z}/{x}/{y}.png）は
+    /// マップ側の MKTileOverlay がこの2値と z/x/y から組み立てる。
+    static func currentNowcastFrame(now: Date = .now) async throws -> (basetime: String, validtime: String) {
+        let frames = try await fetchTargetTimes(targetTimesFcstURL)
+        guard let nearest = frames.min(by: {
+            abs(parse($0.validtime).timeIntervalSince(now)) < abs(parse($1.validtime).timeIntervalSince(now))
+        }) else {
+            throw URLError(.resourceUnavailable)
+        }
+        return (nearest.basetime, nearest.validtime)
     }
 
     private static func fetchTargetTimes(_ url: URL) async throws -> [TargetTime] {

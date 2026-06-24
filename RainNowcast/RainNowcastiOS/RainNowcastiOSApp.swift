@@ -19,7 +19,7 @@ import Combine   // ObservableObject / @Published のために必要
 struct RainNowcastiOSApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RainForecastView()
         }
     }
 }
