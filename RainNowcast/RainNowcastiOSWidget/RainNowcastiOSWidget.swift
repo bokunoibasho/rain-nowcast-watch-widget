@@ -114,8 +114,9 @@ struct RainProvideriOS: TimelineProvider {
 
     /// 次回取得時刻を決める。
     /// ・雨が近い/降雨中/不明 → 15 分後（実時間にバーを追従させる粒度）。
-    /// ・数時間先に雨（rasrf .rainExpected）→ 雨の 1 時間前（起床時にナウキャストが捕捉して
-    ///   15分間隔へ移行）。fetchedAt+15分 〜 +15時間 にクランプ。
+    /// ・数時間先に雨（rasrf .rainExpected）→ 「雨の 1 時間前」までの猶予を半分にした時刻
+    ///   （予報時刻は前倒しに変わり得るので早めに見直す）。毎リロードで半分ずつ縮み、雨が
+    ///   近づくほど頻度が上がる。fetchedAt+15分 〜 +15時間 にクランプ。
     /// ・しばらく雨なし（rasrf .dryThrough）→ 6 時間後（「しばらく」表示後に直近の雨を取りこぼさない）。
     /// ・rasrf 取得失敗 → 60 分後。
     private static func nextRefresh(for base: RainEntryiOS) -> Date {
@@ -127,8 +128,12 @@ struct RainProvideriOS: TimelineProvider {
 
         switch base.outlook {
         case .rainExpected(let t):
+            // 雨の予報時刻は前倒しに変わり得るので、予定取得（雨の1時間前）までの猶予を
+            // 半分にして早めに見直す。例: 5時間後の雨 → 4時間後ではなく 2時間後。
             let oneHourBefore = t.addingTimeInterval(-3600)
-            return min(max(oneHourBefore, floor), ceil)
+            let halved = base.fetchedAt.addingTimeInterval(
+                oneHourBefore.timeIntervalSince(base.fetchedAt) / 2)
+            return min(max(halved, floor), ceil)
         case .dryThrough:  // しばらく雨なし → 6 時間後
             return cal.date(byAdding: .hour, value: 6, to: base.fetchedAt)!
         case .none:  // rasrf 取得失敗 等 → 60 分
